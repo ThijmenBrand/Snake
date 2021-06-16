@@ -1,0 +1,205 @@
+<style>
+    body {
+        margin: 0;
+    }
+</style>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake</title>
+</head>
+<body>
+    <canvas id="canvas" height="600" width="800"></canvas>
+    <p id="movespeed"></p>
+</body>
+</html>
+
+<script>
+    //get canvas
+    let canvas = document.getElementById("canvas");
+    let movespeedX = 2;
+    let movespeedY = 0;
+    var canvasContext = canvas.getContext('2d');
+    
+    //newest cord
+    let locationX = 20;
+    let locationY = 20;
+    //cords up to snakelength
+    let cords = [
+        {X: locationX, Y: locationY}
+    ];
+
+    let snakeLength = 50;
+    
+    //food location
+    let foodX;
+    let foodY;
+    let isfood = false;
+
+    let movespeed = 20;
+    const radius = 10;
+
+    let snakecords = document.getElementById("snake");
+    let foodcords = document.getElementById("food");
+
+    let score = 0;
+
+    let ballColor;
+
+    //onload draw, move and set food
+    window.onload = function() {
+        food();
+    setInterval(callField => {draw(); move();}, 1000/60);
+
+    //keyboard controls
+    document.addEventListener('keydown', event => {
+        const key = event.key.toLowerCase();
+        if(key == "w" || key == "arrowup")
+        {
+            movespeedX = 0;
+            movespeedY = -movespeed;
+        }
+        if(key == "s" || key == "arrowdown")
+        {
+            movespeedX = 0;
+            movespeedY = movespeed;
+        }
+        if(key == "a" || key == "arrowleft")
+        {
+            movespeedY = 0;
+            movespeedX = -movespeed;
+        }
+        if(key == "d" || key == "arrowright")
+        {
+            movespeedY = 0;
+            movespeedX = movespeed;
+        }
+    });
+    }
+
+    function move()
+    {
+        //add movespeed to location to move all directions
+        locationX += movespeedX;
+        locationY += movespeedY;
+
+        //update cords array with newest location
+        cords.unshift({X: locationX, Y: locationY});
+        if(cords.length > snakeLength)
+        {
+            //delete cords[snakeLength];
+            cords = cords.slice(0,-1);
+        }
+
+        //if a wall is hit restart
+        if(cords[0].X >= canvas.width || cords[0].X <= 0 || cords[0].Y >= canvas.height || cords[0].Y <= 0)
+        {
+            restart();
+        }
+
+        if(collision(cords[0].X, cords[0].Y, radius, foodX, foodY, radius))
+        {
+            if(ballColor <= 4)
+            {
+                snakeLength += 20;
+                food();
+                score++;
+            } else{
+                movespeed += 0.5;
+                food();
+                score++;
+            }
+        }
+
+        for(var i = (2*radius)/movespeed+5; i < cords.length; i++)
+        {
+            if(collision(cords[0].X,cords[0].Y, radius, cords[i].X,cords[i].Y, radius))
+            {
+                restart();
+            }
+        }
+
+        document.getElementById("movespeed").innerHTML = movespeed;
+    }
+
+    function collision(snakeX, snakeY, snakeR, foodX, foodY, foodR)
+    {
+        let outcome = Math.sqrt(Math.pow(Math.abs(foodX-snakeX),2)+Math.pow(Math.abs(foodY-snakeY),2));
+
+        if(outcome <= snakeR+foodR)
+        {
+            return true;
+        } else {return false}
+    }
+
+    function draw()
+    {
+        //draw canvas
+        drawRect(0,0,canvas.width,canvas.height,"black");
+        //draw food
+        if(ballColor <= 4)
+        {
+            drawCircle(foodX, foodY, radius, "red");
+        }
+        else
+        {
+            drawCircle(foodX, foodY, radius, "green");
+        }
+        //draw snake
+        cords.forEach(element => {
+            drawCircle(element.X,element.Y,radius,"white");
+        });
+
+        canvasContext.font="30px arial";
+        canvasContext.fillStyle = "white";
+        canvasContext.fillText(score, canvas.width-50, 50);
+    }
+   
+    //reset to standard values
+    function restart()
+    {
+        locationX = Math.floor(Math.random() * (canvas.width-50)) +25;
+        locationY = Math.floor(Math.random() * (canvas.height-50)) +25;
+        if(Math.floor(Math.random() * 2)+1 == 1)
+        {
+            movespeedX = 0;
+            movespeedY = 2;
+        } else
+        {
+            movespeedX = 2;
+            movespeedY = 0;
+        }
+        snakeLength = 30;
+        movespeed = 2;
+        score = 0;
+        cords = [
+            {X: undefined, Y: undefined}
+        ];
+        food();
+    }
+
+    //if the is no food, generate new cords and set food to true
+    function food()
+    {
+            foodX = Math.floor(Math.random() * (canvas.width-50)) +25;
+            foodY = Math.floor(Math.random() * (canvas.height-50)) +25;
+            ballColor = Math.floor(Math.random() * 5)+1;
+    }
+   
+    function drawRect(leftX, topY, width, height, color)
+    {
+        canvasContext.fillStyle = color;
+        canvasContext.fillRect(leftX, topY, width, height);
+    } 
+    function drawCircle(leftX,topY,radius,color)
+    {
+        canvasContext.fillStyle = color;
+        canvasContext.beginPath();
+        canvasContext.arc(leftX,topY,radius,0,Math.PI*2,true);
+        canvasContext.fill()
+    }
+</script>
